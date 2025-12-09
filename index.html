@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Word Scramble Game</title>
+<style>
+    body { font-family: Arial; background: #f2f2f2; padding: 20px; }
+    #game, #completed { display: none; }
+    #scrambled { font-size: 32px; font-weight: bold; letter-spacing: 5px; }
+    #timer { font-size: 22px; color: red; }
+    button { padding: 10px 20px; margin-top: 10px; font-size: 16px; }
+</style>
+</head>
+<body>
+
+<h2>WORD SCRAMBLE GAME</h2>
+
+<div id="menu">
+    <h3>Pilih Difficulty</h3>
+    <button onclick="startGame('easy')">Easy (No Timer)</button>
+    <button onclick="startGame('medium')">Medium (90s)</button>
+    <button onclick="startGame('hard')">Hard (60s)</button>
+</div>
+
+<div id="game">
+    <h3>Difficulty: <span id="diffLabel"></span></h3>
+    <div>Level: <span id="levelLabel"></span> / 100</div>
+    <div>Score: <span id="scoreLabel"></span></div>
+    <div id="timer"></div>
+    <p id="scrambled"></p>
+
+    <input id="answer" placeholder="Your answer..." autocomplete="off">
+    <button onclick="checkWord()">Submit</button>
+</div>
+
+<div id="completed">
+    <h2>COMPLETED!</h2>
+    <p>Score kamu: <span id="finalScore"></span></p>
+    <button onclick="resetProgress()">Restart</button>
+</div>
+
+<script>
+// =====================
+// WORD LIST (100 KATA)
+// =====================
+const wordList = [
+"apple","bread","chair","dream","earth","fruit","ghost","honey","islet","joker",
+"kneel","lemon","maple","night","ocean","prism","queen","river","stone","trace",
+"union","vapor","water","xenon","yield","zebra","angel","blaze","crown","demon",
+"ember","flare","grant","heart","ivory","jelly","koala","light","mango","nylon",
+"opera","pilot","quill","robot","scale","tweet","ultra","voice","whale","xylem",
+"yacht","zones","amber","brine","climb","drape","eagle","frost","glide","hound",
+"inlet","judge","knock","lunar","medal","noble","omega","phase","quart","rival",
+"solid","trust","urban","vital","woven","xerox","young","zesty","altar","beach",
+"candy","dairy","elite","fiber","giant","habit","index","jumps","karma","liver",
+"mirth","nerve","orbit","piano","quark","rigid","solar","trend","unity","virus"
+];
+
+// =====================
+// SAVE & LOAD PROGRESS
+// =====================
+function saveProgress() {
+    localStorage.setItem("scrambleLevel", level);
+    localStorage.setItem("scrambleScore", score);
+    localStorage.setItem("scrambleDifficulty", difficulty);
+}
+
+function loadProgress() {
+    const L = localStorage.getItem("scrambleLevel");
+    const S = localStorage.getItem("scrambleScore");
+    const D = localStorage.getItem("scrambleDifficulty");
+
+    if (L && S && D) {
+        level = parseInt(L);
+        score = parseInt(S);
+        difficulty = D;
+        return true;
+    }
+    return false;
+}
+
+function resetProgress() {
+    localStorage.removeItem("scrambleLevel");
+    localStorage.removeItem("scrambleScore");
+    localStorage.removeItem("scrambleDifficulty");
+    location.reload();
+}
+
+// =====================
+// GAME LOGIC
+// =====================
+let level = 1;
+let score = 0;
+let difficulty = "";
+let timer = 0;
+let interval;
+
+function scramble(word) {
+    return word.split("").sort(() => Math.random() - 0.5).join("");
+}
+
+function startGame(diff) {
+    difficulty = diff;
+
+    // If progress exists AND same difficulty → load it
+    if (loadProgress() && difficulty === localStorage.getItem("scrambleDifficulty")) {
+        // lanjut progress
+    } else {
+        // mulai baru
+        level = 1;
+        score = 0;
+    }
+
+    document.getElementById("menu").style.display = "none";
+    document.getElementById("game").style.display = "block";
+
+    document.getElementById("diffLabel").innerText = difficulty.toUpperCase();
+    nextLevel();
+}
+
+function startTimer() {
+    clearInterval(interval);
+
+    if (difficulty === "easy") {
+        document.getElementById("timer").innerText = "";
+        return;
+    }
+
+    timer = difficulty === "medium" ? 90 : 60;
+
+    interval = setInterval(() => {
+        timer--;
+        document.getElementById("timer").innerText = "Time: " + timer;
+
+        if (timer <= 0) {
+            clearInterval(interval);
+            showCompleted();
+        }
+    }, 1000);
+}
+
+function nextLevel() {
+    if (level > 100) {
+        showCompleted();
+        return;
+    }
+
+    currentWord = wordList[level - 1];
+    document.getElementById("scrambled").innerText = scramble(currentWord);
+    document.getElementById("levelLabel").innerText = level;
+    document.getElementById("scoreLabel").innerText = score;
+
+    document.getElementById("answer").value = "";
+    document.getElementById("answer").focus();
+
+    startTimer();
+}
+
+function checkWord() {
+    const input = document.getElementById("answer").value.toLowerCase();
+    if (input === currentWord) {
+        score += 10;
+        level++;
+        saveProgress();
+        nextLevel();
+    }
+}
+
+function showCompleted() {
+    clearInterval(interval);
+    document.getElementById("game").style.display = "none";
+    document.getElementById("completed").style.display = "block";
+    document.getElementById("finalScore").innerText = score;
+}
+</script>
+
+</body>
+</html>
